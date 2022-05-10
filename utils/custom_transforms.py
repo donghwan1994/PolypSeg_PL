@@ -1,0 +1,126 @@
+import random
+import torch
+import torchvision.transforms.functional as F
+
+
+class Resize(torch.nn.Module):
+    def __init__(self, size, interpolation=F.InterpolationMode.BILINEAR, max_size=None, antialias=None):
+        super().__init__()
+        self.size = size
+        self.max_size = max_size
+        self.interpolation = interpolation
+        self.antialias = antialias
+
+    def forward(self, img, map):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+            map (PIL Image or Tensor): Image of segmentation map
+
+        Returns:
+            PIL Image or Tensor: Rescaled image.
+        """
+        return F.resize(img, self.size, self.interpolation, self.max_size, self.antialias),\
+             F.resize(map, self.size, self.interpolation, self.max_size, self.antialias)
+
+    def __repr__(self) -> str:
+        detail = f"(size={self.size}, interpolation={self.interpolation.value}, max_size={self.max_size}, antialias={self.antialias})"
+        return f"{self.__class__.__name__}{detail}"
+
+
+class Normalize(torch.nn.Module):
+    def __init__(self, mean, std, inplace=False):
+        super().__init__()
+        self.mean = mean
+        self.std = std
+        self.inplace = inplace
+
+    def forward(self, img, map) -> torch.Tensor:
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+            map (PIL Image or Tensor): Image of segmentation map
+
+        Returns:
+            Tensor: Normalized Tensor image.
+        """
+        return F.normalize(img, self.mean, self.std, self.inplace), map
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
+
+
+class RandomHorizontalFlip(torch.nn.Module):
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def forward(self, img, map):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+            map (PIL Image or Tensor): Image of segmentation map
+
+        Returns:
+            PIL Image or Tensor: Randomly flipped image.
+        """
+        if torch.rand(1) < self.p:
+            return F.hflip(img), F.hflip(map)
+        return img, map
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(p={self.p})"
+
+
+class RandomVerticalFlip(torch.nn.Module):
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def forward(self, img, map):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+            map (PIL Image or Tensor): Image of segmentation map
+
+        Returns:
+            PIL Image or Tensor: Randomly flipped image.
+        """
+        if torch.rand(1) < self.p:
+            return F.vflip(img), F.vflip(map)
+        return img, map
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(p={self.p})"
+
+
+class RandomRotate90(torch.nn.Module):
+    def __init__(self, p=0.5) -> None:
+        super().__init__()
+        self.p = p
+        self.angles = [-90, 0, 90, 180]
+
+    def forward(self, img, map):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+            map (PIL Image or Tensor): Image of segmentation map
+
+        Returns:
+            PIL Image or Tensor: Randomly flipped image.
+        """
+        if torch.rand(1) < self.p:
+            angle = random.choice(self.angles)
+            return F.rotate(img, angle), F.rotate(map, angle)
+        return img, map
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(p={self.p})"
+
+
+class ToTensor:
+    def __init__(self) -> None:
+        pass 
+
+    def __call__(self, img, map):
+        return F.to_tensor(img), F.to_tensor(map)
