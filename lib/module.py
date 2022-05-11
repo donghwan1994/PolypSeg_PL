@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from torch import Tensor
 from torch.nn.common_types import _size_2_t
-from typing import Union
+from typing import *
 
 
 class Conv(nn.Module):
@@ -155,11 +155,11 @@ class Shallow_Attention(nn.Module):
     def __init__(self, channels) -> None:
         super().__init__()
 
-        self.shallow2 = Conv(512, channels, 1)
-        self.shallow3 = Conv(1024, channels, 1)
-        self.shallow4 = Conv(2048, channels, 1)
+        self.shallow2 = Conv(512, channels, 1, relu=True)
+        self.shallow3 = Conv(1024, channels, 1, relu=True)
+        self.shallow4 = Conv(2048, channels, 1, relu=True)
 
-        self.conv_out = Conv(3 * channels, 1, 1)
+        self.conv_out = Conv(3 * channels, 1, 1, bn=False)
 
     def forward(self, x2: Tensor, x3: Tensor, x4: Tensor) -> Tensor:
         x2 = self.shallow2(x2)
@@ -172,4 +172,45 @@ class Shallow_Attention(nn.Module):
         x = torch.cat([x4, x4 * x3, x4 * x3 * x2], dim=1)
         x = self.conv_out(x)
 
+        return x
+
+
+class Multiscale_Subtraction(nn.Module):
+    def __init__(
+        self, 
+        in_channels: int,
+        out_channels: int, 
+        depth: int, 
+        kernel_size: _size_2_t,
+        return_feat: Optional[bool] = True
+    ) -> None:
+        super().__init__()
+        self.return_feat = return_feat
+        self.conv_in = Conv(in_channels, out_channels, kernel_size, relu=True)
+        if depth > 0:
+            self.convs = nn.ModuleList()
+            for i in range(depth):
+                self.convs.append(
+                    Conv(out_channels, out_channels, kernel_size, relu=True)
+                )
+        else:
+            self.convs = None
+        self.conv_ce = Conv(out_channels, out_channels, kernel_size, relu=True)
+
+    def forward(self, x: Tensor, f_list: Optional[Union[List[Tensor], Any]] = None) -> Tuple[Tensor, List[Tensor]]:
+        ms = []
+        x = self.conv_in(x)
+        ms.append(x)
+        if f_list is not None:
+            assert len(self.convs) == len(f_list)
+            su = x
+            for conv, f in zip(self.convs, f_list):
+                f = F.interpolate(f, size=su.shape[-2:], mode='bilinear', align_corners=False)
+                su = conv(torch.abs(su - f))
+                x += su
+                ms.append(su)   
+        x = self.conv_ce(x)
+
+        if self.return_feat:
+            return x, ms
         return x
