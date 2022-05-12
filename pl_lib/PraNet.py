@@ -21,7 +21,8 @@ class PraNet(pl.LightningModule):
         self.loss_fn = bce_iou_loss
 
     def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
-        return self.model(x) # pred2, pred3, pred4, pred5
+        pred, _, _, _ = self.model(x) # pred2, pred3, pred4, pred5
+        return pred
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.hparams.params['lr'])
@@ -37,7 +38,7 @@ class PraNet(pl.LightningModule):
             base_size = int(round(x.shape[-2] * scale / 32) * 32), int(round(x.shape[-1] * scale / 32) * 32)
             x = F.interpolate(x, size=base_size, mode='bilinear', align_corners=True)
             y = F.interpolate(y, size=base_size, mode='bilinear', align_corners=True)
-            pred2, pred3, pred4, pred5 = self.forward(x)
+            pred2, pred3, pred4, pred5 = self.model(x)
             
             pred2 = F.interpolate(pred2, size=base_size, mode='bilinear', align_corners=False)
             pred3 = F.interpolate(pred3, size=base_size, mode='bilinear', align_corners=False)
@@ -52,16 +53,26 @@ class PraNet(pl.LightningModule):
             loss = loss2 + loss3 + loss4 + loss5
 
             if scale == 1:
-                self.log(mode + "_loss2", loss2)
-                self.log(mode + "_loss3", loss3)
-                self.log(mode + "_loss4", loss4)
-                self.log(mode + "_loss5", loss5)
-                self.log(mode + "_total_loss", loss)
+                self.log(mode + "_loss2", loss2, batch_size=self.hparams.params['batch_size'])
+                self.log(mode + "_loss3", loss3, batch_size=self.hparams.params['batch_size'])
+                self.log(mode + "_loss4", loss4, batch_size=self.hparams.params['batch_size'])
+                self.log(mode + "_loss5", loss5, batch_size=self.hparams.params['batch_size'])
+                self.log(mode + "_total_loss", loss, batch_size=self.hparams.params['batch_size'])
 
         return loss
 
-    def training_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="train")
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="train")
     
-    def validation_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="val")
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="val")
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        x, _ = batch['data']
+        file_name = batch['file_name']
+        origin_size = batch['origin_size']
+
+        pred = torch.sigmoid(self(x))
+        pred = F.interpolate(pred, size=origin_size, mode='bilinear', align_corners=True)
+
+        return pred, file_name

@@ -3,8 +3,9 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as F
 
+from typing import *
 
-# All implementations are referenced to `torchvision.transforms`
+# All implementations are referenced to `torchvision.transforms`.
 
 class Resize(torch.nn.Module):
     def __init__(self, size, interpolation=F.InterpolationMode.BILINEAR, max_size=None, antialias=None):
@@ -104,6 +105,43 @@ class RandomVerticalFlip(torch.nn.Module):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(p={self.p})"
+
+
+class RandomRotate(torch.nn.Module):
+    def __init__(
+        self, degrees, interpolation=F.InterpolationMode.NEAREST, expand=False, center=None, fill=0):
+        super().__init__()
+
+        self.degrees = transforms._setup_angle(degrees, name="degrees", req_sizes=(2,))
+
+        if center is not None:
+            transforms._check_sequence_input(center, "center", req_sizes=(2,))
+
+        self.center = center
+
+        self.resample = self.interpolation = interpolation
+        self.expand = expand
+
+        self.fill = fill
+
+    def forward(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be rotated.
+
+        Returns:
+            PIL Image or Tensor: Rotated image.
+        """
+        fill = self.fill
+        if isinstance(img, torch.Tensor):
+            if isinstance(fill, (int, float)):
+                fill = [float(fill)] * F.get_image_num_channels(img)
+            else:
+                fill = [float(f) for f in fill]
+        angle = transforms.RandomRotation.get_params(self.degrees)
+
+        return F.rotate(img, angle, self.resample, self.expand, self.center, fill), \
+            F.rotate(map, angle, self.resample, self.expand, self.center, fill)
 
 
 class RandomRotate90(torch.nn.Module):

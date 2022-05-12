@@ -45,7 +45,7 @@ class MSNet(pl.LightningModule):
     def calculate_loss(self, batch, mode: str = "train") -> Tensor:
         x, y = batch
 
-        pred = self.forward(x)
+        pred = self.model(x)
         pred = F.interpolate(pred, size=x.shape[-2:], mode='bilinear', align_corners=False)
 
         weights = 1 + 5 * torch.abs(F.avg_pool2d(y, kernel_size=31, stride=1, padding=15) - y)
@@ -53,12 +53,22 @@ class MSNet(pl.LightningModule):
         loss = self.bce_iou_loss(pred, y, weights=weights) + \
                 self.loss_net(torch.sigmoid(pred), y) * self.hparams.params['coeff']
 
-        self.log(mode + "_loss", loss)
+        self.log(mode + "_loss", loss, batch_size=self.hparams.params['batch_size'])
 
         return loss
 
-    def training_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="train")
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="train")
     
-    def validation_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="val")
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="val")
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        x, _ = batch['data']
+        file_name = batch['file_name']
+        origin_size = batch['origin_size']
+
+        pred = torch.sigmoid(self(x))
+        pred = F.interpolate(pred, size=origin_size, mode='bilinear', align_corners=True)
+
+        return pred, file_name

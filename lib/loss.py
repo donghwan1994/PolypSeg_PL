@@ -38,7 +38,7 @@ def bce_dice_loss(pred: torch.Tensor, mask: torch.Tensor,
     return (wbce + wdice).mean()
 
 
-# implemented by ``https://gist.github.com/alper111/8233cdb0414b4cb5853f2f730ab95a49``
+# brought from ``https://gist.github.com/alper111/8233cdb0414b4cb5853f2f730ab95a49``.
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
@@ -79,5 +79,5 @@ class VGGPerceptualLoss(torch.nn.Module):
                 gram_x = act_x @ act_x.permute(0, 2, 1)
                 gram_y = act_y @ act_y.permute(0, 2, 1)
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
-                
+
         return loss

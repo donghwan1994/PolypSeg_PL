@@ -15,10 +15,14 @@ class PolypDataset(data.Dataset):
         root: str, 
         train: bool = True,
         transforms: Optional[Callable] = None,
-        dataname: str = 'Kvasir',
+        dataname: Optional[str] = None,
         color_exchange: Optional[bool] = False
     ) -> None:
         super().__init__()
+        self.train = train
+        self.transforms = transforms
+        self.color_exchange = color_exchange
+
         self.root = os.path.join(root, 'TrainDataset') if train else os.path.join(root, 'TestDataset', dataname)
         self.images = [os.path.join(self.root, 'images', f) for f in os.listdir(os.path.join(self.root, 'images')) \
             if f.endswith('.jpg') or f.endswith('.png')]
@@ -31,12 +35,14 @@ class PolypDataset(data.Dataset):
         assert len(self.images) == len(self.targets)
         self.filter_files()
 
-        self.transforms = transforms
-        self.color_exchange = color_exchange
-
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         image = Image.open(self.images[index]).convert('RGB')
         target = Image.open(self.targets[index]).convert('L')
+
+        file_name = self.images[index].split('/')[-1]
+        if file_name.endswith('.jpg'):
+            file_name = file_name.split('.jpg')[0] + '.png'
+        origin_size = (target.height, target.width)
 
         if self.color_exchange:
             r_indexs = [i for i in range(0, len(self.images))]
@@ -45,10 +51,10 @@ class PolypDataset(data.Dataset):
             image = self.color_exchange_fn(image, r_image)
 
         if self.transforms is not None:
-            for t in self.transforms:
-                image, target = t(image, target)
-
-        return image, target
+            for transform in self.transforms:
+                image, target = transform(image, target)
+            
+        return {'data' : (image, target), 'file_name': file_name, 'origin_size': origin_size}
 
     def __len__(self) -> int:
         return len(self.images)

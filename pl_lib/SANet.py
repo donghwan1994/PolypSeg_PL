@@ -45,21 +45,27 @@ class SANet(pl.LightningModule):
     def calculate_loss(self, batch, mode: str = "train") -> Tensor:
         x, y = batch
 
-        pred = self.forward(x)
+        pred = self.model(x)
         pred = F.interpolate(pred, size=x.shape[-2:], mode='bilinear', align_corners=False)
         loss = self.loss_fn(pred, y)
 
-        self.log(mode + "_loss", loss)
+        self.log(mode + "_loss", loss, batch_size=self.hparams.params['batch_size'])
 
         return loss
     
-    def training_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="train")
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="train")
     
-    def validation_step(self, batch, batch_idx):
-        return self.calculate_loss(batch, mode="val")
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.calculate_loss(batch['data'], mode="val")
 
-    def test_step(self, batch, batch_idx):
-        x, _ = batch
-        pred = self.forward(x)
-        return self.prob_correction(pred)
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        x, _ = batch['data']
+        file_name = batch['file_name']
+        origin_size = batch['origin_size']
+
+        pred = self.prob_correction(self(x))
+        pred = torch.sigmoid(pred)
+        pred = F.interpolate(pred, size=origin_size, mode='bilinear', align_corners=True)
+
+        return pred, file_name
