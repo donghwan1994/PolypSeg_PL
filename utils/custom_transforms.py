@@ -45,6 +45,9 @@ class RandomResize(torch.nn.Module):
                 max_size=None, antialias=None) -> None:
         super().__init__()
         self.size_list = size_list
+        self.interpolation = interpolation
+        self.max_size = max_size
+        self.antialias = antialias
 
     def forward(self, img, map):
         size = random.choice(self.size_list)
