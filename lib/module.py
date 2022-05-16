@@ -201,13 +201,12 @@ class Multiscale_Subtraction(nn.Module):
         ms = []
         x = self.conv_in(x)
         ms.append(x)
-        if f_list is not None:
+        if self.convs is not None:
             assert len(self.convs) == len(f_list)
-            su = x
             for conv, f in zip(self.convs, f_list):
-                f = F.interpolate(f, size=su.shape[-2:], mode='bilinear', align_corners=False)
-                su = conv(torch.abs(su - f))
-                x += su
+                f = F.interpolate(f, size=x.shape[-2:], mode='bilinear', align_corners=False)
+                su = conv(torch.abs(x - f))
+                x = x + su
                 ms.append(su)   
         x = self.conv_ce(x)
 
