@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary
-from dataloader.dataset import PolypDataset, collate_resize
+from dataloader.dataset import PolypDataset
 
 from pl_lib import *
 from utils.custom_transforms import *
