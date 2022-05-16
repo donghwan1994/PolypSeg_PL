@@ -13,10 +13,8 @@ from PIL import Image
 from tabulate import tabulate
 
 
-def evaluate(result_path, datasets, pred_root, gt_root):
-    if os.path.isdir(result_path) is False:
-        os.makedirs(result_path)
-
+def evaluate(datasets, pred_root, gt_root):
+    result_path = os.path.split(pred_root)[0]
     method = os.path.split(pred_root)[-1]
     Thresholds = np.linspace(1, 0, 256)
     headers = ['meanDic', 'meanIoU', 'wFm', 'Sm', 'meanEm', 'mae', 'maxEm', 
@@ -28,11 +26,11 @@ def evaluate(result_path, datasets, pred_root, gt_root):
                         position=0, bar_format='{desc:<30}{percentage:3.0f}%|{bar:50}{r_bar}')
 
     for dataset in datasets:
-        pred_root = os.path.join(pred_root, dataset)
-        gt_root = os.path.join(gt_root, dataset, 'masks')
+        pred_path = os.path.join(pred_root, dataset)
+        gt_path = os.path.join(gt_root, dataset, 'masks')
 
-        preds = os.listdir(pred_root)
-        gts = os.listdir(gt_root)
+        preds = os.listdir(pred_path)
+        gts = os.listdir(gt_path)
 
         preds.sort()
         gts.sort()
@@ -57,8 +55,8 @@ def evaluate(result_path, datasets, pred_root, gt_root):
             pred, gt = sample
             assert os.path.splitext(pred)[0] == os.path.splitext(gt)[0]
 
-            pred_mask = np.array(Image.open(os.path.join(pred_root, pred)))
-            gt_mask = np.array(Image.open(os.path.join(gt_root, gt)))
+            pred_mask = np.array(Image.open(os.path.join(pred_path, pred)))
+            gt_mask = np.array(Image.open(os.path.join(gt_path, gt)))
             
             if len(pred_mask.shape) != 2:
                 pred_mask = pred_mask[:, :, 0]
@@ -141,9 +139,9 @@ def evaluate(result_path, datasets, pred_root, gt_root):
             csv = open(csv, 'w')
             csv.write(', '.join(['method', *headers]) + '\n')
 
-        out_str = method + ','
+        out_str = method + ', '
         for metric in result:
-            out_str += '{:.4f}'.format(metric) + ','
+            out_str += '{:.4f}'.format(metric) + ', '
         out_str += '\n'
 
         csv.write(out_str)
