@@ -32,30 +32,6 @@ class Resize(torch.nn.Module):
         return f"{self.__class__.__name__}{detail}"
 
 
-class RandomResize(torch.nn.Module):
-    """Resize the input image with randomly chosen size.
-        Args:
-            size_list (List[int]): Size list 
-        
-        Example:
-        >>> transform = RandomResize([168, 224, (256, 280), 384])
-        >>> image, target = transform(image, target)
-    """
-    def __init__(self, size_list, interpolation=F.InterpolationMode.BILINEAR, 
-                max_size=None, antialias=None) -> None:
-        super().__init__()
-        self.size_list = size_list
-        self.interpolation = interpolation
-        self.max_size = max_size
-        self.antialias = antialias
-
-    def forward(self, img, map):
-        size = random.choice(self.size_list)
-
-        return F.resize(img, size, self.interpolation, self.max_size, self.antialias), \
-            F.resize(map, size, self.interpolation, self.max_size, self.antialias)
-
-
 class Normalize(torch.nn.Module):
     def __init__(self, mean, std, inplace=False):
         super().__init__()
@@ -125,7 +101,7 @@ class RandomRotate(torch.nn.Module):
 
         self.fill = fill
 
-    def forward(self, img):
+    def forward(self, img, map):
         """
         Args:
             img (PIL Image or Tensor): Image to be rotated.
