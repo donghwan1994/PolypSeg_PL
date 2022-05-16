@@ -47,8 +47,9 @@ def _vgg(arch: str, cfg: List[Union[str, int]], batch_norm: bool, pretrained: bo
         kwargs["init_weights"] = False
     model = VGG(make_layers(cfg, batch_norm=batch_norm), **kwargs)
     if pretrained:
-        model_state = torch.load('weights/vgg16-397923af.pth')
-        model.load_state_dict(model_state)
+        # state_dict = load_state_dict_from_url(model_urls[arch], progress=progress)
+        state_dict = torch.load('weights/vgg16-397923af.pth')
+        model.load_state_dict(state_dict)
     return model
 
 def vgg16(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> VGG:
