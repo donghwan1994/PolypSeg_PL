@@ -9,7 +9,8 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary
-from dataset.polypdataset import PolypDataset
+from dataloader.dataset import PolypDataset
+from dataloader.dataloader import PolypDataModule
 
 from pl_lib import *
 from utils.eval_functions import evaluate
@@ -99,7 +100,7 @@ def test(args):
         save_prediction(preds, save_dir)
         
     if args.eval:
-        evaluate(result_path, datanames, save_root, os.path.join(args.data_root, 'TestDataset'))
+        evaluate(datanames, save_root, os.path.join(args.data_root, 'TestDataset'))
 
 
 if __name__ == '__main__':
