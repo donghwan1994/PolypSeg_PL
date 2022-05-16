@@ -1,3 +1,4 @@
+import random
 import torch
 from torch import Tensor
 import torch.optim as optim
@@ -60,7 +61,11 @@ class MSNet(pl.LightningModule):
         return loss
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        return self.calculate_loss(batch['data'], mode="train")
+        random_size = random.choice([224, 256, 288, 320, 352])
+        x, y = batch['data']
+        x = F.interpolate(x, size=random_size, mode='bilinear')
+        y = F.interpolate(y, size=random_size, mode='bilinear')
+        return self.calculate_loss((x, y), mode="train")
     
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         return self.calculate_loss(batch['data'], mode="val")
