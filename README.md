@@ -67,6 +67,6 @@ python eval.py  --data_root DATA_PATH --pred_root RESULT_PATH
 * [SANet](https://github.com/weijun88/SANet)
 * [MSNet](https://github.com/Xiaoqi-Zhao-DLUT/MSNet)
 
-## Authors
+## Author
 
 Donghwan Hwang
