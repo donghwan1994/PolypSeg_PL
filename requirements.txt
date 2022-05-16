@@ -1,0 +1,10 @@
+torch
+torchvision
+pytorch-lightning
+tqdm
+easydict
+pyyaml
+opencv-python
+thop
+tabulate
+scipy
