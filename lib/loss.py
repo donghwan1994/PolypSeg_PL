@@ -1,7 +1,12 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import vgg16
+from torchvision.models.vgg import VGG, make_layers
+
+os.environ['TORCH_HOME'] = 'weights'
+
+from typing import *
 
 
 def bce_iou_loss(pred: torch.Tensor, mask: torch.Tensor, 
@@ -39,6 +44,19 @@ def bce_dice_loss(pred: torch.Tensor, mask: torch.Tensor,
 
 
 # brought from ``https://gist.github.com/alper111/8233cdb0414b4cb5853f2f730ab95a49``.
+def _vgg(arch: str, cfg: List[Union[str, int]], batch_norm: bool, pretrained: bool, progress: bool, **kwargs: Any) -> VGG:
+    if pretrained:
+        kwargs["init_weights"] = False
+    model = VGG(make_layers(cfg, batch_norm=batch_norm), **kwargs)
+    if pretrained:
+        model_state = torch.load('weights/vgg16-397923af.pth')
+        model.load_state_dict(model_state)
+    return model
+
+def vgg16(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> VGG:
+    return _vgg("vgg16", [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"], 
+                False, pretrained, progress, **kwargs)
+
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
