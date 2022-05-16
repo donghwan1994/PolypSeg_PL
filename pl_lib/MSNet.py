@@ -21,6 +21,7 @@ class MSNet(pl.LightningModule):
 
         self.bce_iou_loss = bce_iou_loss
         self.loss_net = VGGPerceptualLoss()
+        self.loss_net.eval()
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
@@ -29,7 +30,9 @@ class MSNet(pl.LightningModule):
         base, head = [], []
         for name, param in self.model.named_parameters():
             if 'res2net' in name:
-                if 'layer' in name:
+                if 'conv1' in name or 'bn1' in name:
+                    pass
+                else:
                     base.append(param)
             else:
                 head.append(param)
