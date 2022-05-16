@@ -4,7 +4,9 @@ import random
 from PIL import Image, ImageCms
 import torch
 import torch.utils.data as data
+from torch.utils.data._utils.collate import default_collate
 import torchvision.transforms as transforms
+import torchvision.transforms.functional as F
 
 from typing import *
 
@@ -99,3 +101,18 @@ class PolypDataset(data.Dataset):
         image1 = ImageCms.applyTransform(image1, lab2rgb)
 
         return image1
+
+
+def collate_resize(batch):
+    # MSNet use random resized collate function.
+    sizes = [224, 256, 288, 320, 352]
+    size = random.choice(sizes)
+
+    datas = [b['data'] for b in batch]
+    for b in batch:
+        image, map = b['data']
+        image = F.resize(image, size)
+        map = F.resize(map, size)
+        b['data'] = (image, map)
+
+    return default_collate(batch)
