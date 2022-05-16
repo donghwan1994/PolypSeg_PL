@@ -1,7 +1,7 @@
 import os
 import random
 
-from PIL import Image, ImageCms, ImageStat
+from PIL import Image, ImageCms
 import torch
 import torch.utils.data as data
 import torchvision.transforms as transforms
