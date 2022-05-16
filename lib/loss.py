@@ -4,8 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.vgg import VGG, make_layers
 
-os.environ['TORCH_HOME'] = 'weights'
-
 from typing import *
 
 
