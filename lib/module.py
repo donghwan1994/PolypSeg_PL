@@ -146,7 +146,7 @@ class Reverse_Attention(nn.Module):
         x = rmap.expand(-1, x.shape[1], -1, -1).mul(x)
         x = self.conv(x)
         x = self.conv_out(x)
-        x += map
+        x = x + map
 
         return x
 
