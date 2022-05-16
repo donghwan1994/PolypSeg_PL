@@ -16,8 +16,8 @@ def train(args):
     if 'pranet' in str(args.method):
         hparams = {
             'channels': 32,
-            'epoch': 2,
-            'batch_size': 2,
+            'epoch': 20,
+            'batch_size': 16,
             'lr': 1e-4,
             'decay_rate': 0.1,
             'decay_epoch': 50,
@@ -34,8 +34,8 @@ def train(args):
     elif 'sanet' in str(args.method):
         hparams = {
             'channels': 64,
-            'epoch': 1,
-            'batch_size': 2,
+            'epoch': 128,
+            'batch_size': 64,
             'lr': 0.4,
             'momentum': 0.9,
             'weight_decay': 5e-4,
@@ -111,7 +111,9 @@ def train(args):
         logger=TensorBoardLogger("logs/", name=args.method),
         callbacks=[
             checkpoint_callback
-        ]
+        ],
+        amp_backend="apex", 
+        amp_level="O2"
     )
 
     trainer.fit(model, train_loader, val_loader)
