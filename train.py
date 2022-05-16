@@ -67,7 +67,7 @@ def train(args):
             'channels': 64,
             'coeff': 0.1, 
             'epoch': 50,
-            'batch_size': 64,
+            'batch_size': 16,
             'lr': 0.05,
             'momentum': 0.9,
             'weight_decay': 5e-4,
