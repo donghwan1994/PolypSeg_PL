@@ -24,7 +24,7 @@ def train(args):
             'grad_clip_val': 0.5,
             'grad_clip_algorithm': 'value',
             'amp_backend': 'native',
-            'amp_level': '02',
+            'amp_level': None,
             'precision': 32
         }
         model = PraNet(hparams)
@@ -75,7 +75,7 @@ def train(args):
             'grad_clip_val': None,
             'grad_clip_algorithm': 'norm',
             'amp_backend': 'native',
-            'amp_level': '02',
+            'amp_level': None,
             'precision': 16
         }
         model = MSNet(hparams)
@@ -84,7 +84,7 @@ def train(args):
             RandomResize([224, 256, 288, 320, 352]),
             RandomHorizontalFlip(),
             RandomVerticalFlip(),
-            RandomRotate(),
+            RandomRotate(degrees=10),
             ToTensor(),
             Normalize([0.485, 0.456, 0.406],
                     [0.229, 0.224, 0.225])
