@@ -20,17 +20,11 @@ from typing import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--method', type=str,
-                         default='pranet', help='polyp segmentation method, pranet|sanet|msnet')
-    parser.add_argument('--gpus', type=int,
-                        default=1, help='number of gpus')
-    parser.add_argument('--num_workers', type=int,
-                        default=4, help='number of workers for dataloader')
     parser.add_argument('--data_root', type=str,
                         default='/workspace/donghwan/dataset/PolypDataset/dataset', help='root path to polyp dataset')
-    parser.add_argument('--save_root', type=str,
+    parser.add_argument('--pred_root', type=str,
                         default='results/pranet', help='root path to polyp dataset')
     args = parser.parse_args()                
 
     datanames = ['CVC-300', 'CVC-ClinicDB', 'Kvasir', 'CVC-ColonDB', 'ETIS-LaribPolypDB']
-    evaluate(datanames, args.save_root, os.path.join(args.data_root, 'TestDataset'))
+    evaluate(datanames, args.pred_root, os.path.join(args.data_root, 'TestDataset'))
