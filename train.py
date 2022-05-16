@@ -22,7 +22,10 @@ def train(args):
             'decay_rate': 0.1,
             'decay_epoch': 50,
             'grad_clip_val': 0.5,
-            'grad_clip_algorithm': 'value'
+            'grad_clip_algorithm': 'value',
+            'amp_backend': 'native',
+            'amp_level': '02',
+            'precision': 32
         }
         model = PraNet(hparams)
         train_transforms = [
@@ -44,6 +47,9 @@ def train(args):
             'milestones': [64, 96],
             'grad_clip_val': None,
             'grad_clip_algorithm': 'norm',
+            'amp_backend': 'apex',
+            'amp_level': '02',
+            'precision': 32
         }
         model = SANet(hparams)
         train_transforms = [
@@ -68,6 +74,9 @@ def train(args):
             'milestones': [64, 96],
             'grad_clip_val': None,
             'grad_clip_algorithm': 'norm',
+            'amp_backend': 'native',
+            'amp_level': '02',
+            'precision': 16
         }
         model = MSNet(hparams)
         train_transforms = [
@@ -112,8 +121,9 @@ def train(args):
         callbacks=[
             checkpoint_callback
         ],
-        amp_backend="apex", 
-        amp_level="O2"
+        amp_backend=hparams['amp_backend'], 
+        amp_level=hparams['amp_level'],
+        precision=hparams['precision']
     )
 
     trainer.fit(model, train_loader, val_loader)
