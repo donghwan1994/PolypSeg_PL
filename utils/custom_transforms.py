@@ -44,7 +44,6 @@ class RandomResize(torch.nn.Module):
     def __init__(self, size_list, interpolation=F.InterpolationMode.BILINEAR, 
                 max_size=None, antialias=None) -> None:
         super().__init__()
-        assert isinstance(size_list, list)
         self.size_list = size_list
 
     def forward(self, img, map):
@@ -111,13 +110,12 @@ class RandomRotate(torch.nn.Module):
     def __init__(
         self, degrees, interpolation=F.InterpolationMode.NEAREST, expand=False, center=None, fill=0):
         super().__init__()
-
-        self.degrees = transforms._setup_angle(degrees, name="degrees", req_sizes=(2,))
-
-        if center is not None:
-            transforms._check_sequence_input(center, "center", req_sizes=(2,))
+        self.degrees = transforms.transforms._setup_angle(degrees, name="degrees", req_sizes=(2,))
 
         self.center = center
+
+        if center is not None:
+           transforms.transforms._check_sequence_input(center, "center", req_sizes=(2,))
 
         self.resample = self.interpolation = interpolation
         self.expand = expand
