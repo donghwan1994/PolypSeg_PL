@@ -77,7 +77,7 @@ def train(args):
             'grad_clip_algorithm': 'norm',
             'amp_backend': 'native',
             'amp_level': None,
-            'precision': 16,
+            'precision': 32,
             'color_exchange': False
         }
         model = MSNet(hparams)
