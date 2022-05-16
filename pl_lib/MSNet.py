@@ -3,7 +3,6 @@ from torch import Tensor
 import torch.optim as optim
 import pytorch_lightning as pl
 import torch.nn.functional as F
-from torchvision.models.vgg import vgg16
 
 from lib.loss import *
 from lib.module import *
