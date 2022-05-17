@@ -49,7 +49,7 @@ python train.py --method 'msnet' --gpus 1 --num_workers 4 --data_root DATA_PATH
 
 ## Inference & Evaluation
 
-You can generate and evaluate predictions of trained model by
+You can generate and evaluate predictions of the trained model by
 ```
 python test.py  --method 'pranet' --gpus 1 --num_workers 4 --data_root DATA_PATH
 ```
