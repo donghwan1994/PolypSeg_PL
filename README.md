@@ -28,7 +28,7 @@ The training and testing datasets come from [PraNet](https://github.com/DengPing
 
 ### Download backbone weights
 
-Download the backbone (VGG-16 for LossNet of MSNet) weights and move them into `./weights` folder.
+Make `./weights` directory and download the backbone and VGG-16 (for LossNet of MSNet) weights into the directory.
 
 ### Training Polypsegmentation methods
 
