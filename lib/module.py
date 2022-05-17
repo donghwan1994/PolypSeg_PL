@@ -131,6 +131,7 @@ class Reverse_Attention(nn.Module):
         kernel_size: _size_2_t
     ) -> None:
         super().__init__()
+        
         self.conv = nn.Sequential(
             Conv(in_channels, channels, 1)
         )
@@ -186,6 +187,7 @@ class Multiscale_Subtraction(nn.Module):
     ) -> None:
         super().__init__()
         self.return_feat = return_feat
+        
         self.conv_in = Conv(in_channels, out_channels, kernel_size, relu=True)
         if depth > 0:
             self.convs = nn.ModuleList()
@@ -212,4 +214,5 @@ class Multiscale_Subtraction(nn.Module):
 
         if self.return_feat:
             return x, ms
+
         return x
