@@ -2,9 +2,7 @@
 
 Pytorch Lightning implementation of polyp segementation methods for easy and useful research.
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 * torch
 * torchvision
@@ -19,18 +17,18 @@ Pytorch Lightning implementation of polyp segementation methods for easy and use
 
 Easy install script : `pip install -r requirements.txt`
 
-### Download dataset
+## Download dataset
 
 The training and testing datasets come from [PraNet](https://github.com/DengPingFan/PraNet). Download these datasets and unzip them into your data folder.
 
 - [Training Dataset](https://drive.google.com/file/d/1lODorfB33jbd-im-qrtUgWnZXxB94F55/view?usp=sharing)
 - [Testing Dataset](https://drive.google.com/file/d/1o8OfBvYE6K-EpDyvzsmMPndnUMwb540R/view?usp=sharing)
 
-### Download backbone weights
+## Download backbone weights
 
 Make `./weights` directory and download the backbone and VGG-16 (for LossNet of MSNet) weights into the directory.
 
-### Training Polypsegmentation methods
+## Training Polypsegmentation methods
 
 Novel polyp segmentation methods ([PraNet](https://github.com/DengPingFan/PraNet), [SANet](https://github.com/weijun88/SANet), [MSNet](https://github.com/Xiaoqi-Zhao-DLUT/MSNet)) are implemented.
 You can train them with the below commands.
@@ -62,6 +60,7 @@ python eval.py  --data_root DATA_PATH --pred_root RESULT_PATH
 ```
 
 Python evaluation methods are brought from [UACANet](https://github.com/plemeri/UACANet). Thanks for the awesome work.
+
 
 ## References
 
