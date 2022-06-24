@@ -216,3 +216,193 @@ class Multiscale_Subtraction(nn.Module):
             return x, ms
 
         return x
+
+
+class Foreground_Enhancement(nn.Module):
+    def __init__(self, channel, groups=1):
+        super(Foreground_Enhancement, self).__init__()
+        self.bg_gen = nn.Sequential(
+            Conv(channel, channel, 1, 1, 1, groups, bias=True, bn=False, relu=True),
+            Conv(channel, channel, 1, 1, 1, groups, bias=True, bn=False, relu=False),
+            nn.Sigmoid()
+        )
+
+        self.fg_gen = nn.Sequential(
+            Conv(channel, channel, 1, 1, 1, groups, bias=True, bn=False, relu=True),
+            Conv(channel, channel, 1, 1, 1, groups, bias=True, bn=False, relu=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x, feat):
+        b, c, h, w = x.shape
+
+        std, mean = torch.std_mean(feat, [2, 3], keepdim=True)
+        threshold = mean - 2 * std
+
+        # background modeling
+        bg = threshold - feat
+        bg = self.bg_gen(bg)
+        bca = bg * x
+
+        # foreground modeling
+        fg = feat - threshold
+        fg = self.fg_gen(fg)    
+
+        # Foreground Enhancement
+        fe = fg * x
+        out = x  - bca + fe
+        
+        return out   
+
+
+class Fore_Attention(nn.Module):
+    def __init__(self, in_channel, channel, depth=3, kernel_size=3):
+        super(Fore_Attention, self).__init__()
+        self.atten = Foreground_Enhancement(channel)
+        self.conv_in = Conv(3 * in_channel, channel, 1)
+        self.conv_mid = nn.ModuleList()
+        for i in range(depth):
+            self.conv_mid.append(Conv(channel, channel, kernel_size))
+        self.conv_out = Conv(channel, 1, 1)
+
+    def forward(self, x, feat, map):
+        map = F.interpolate(map, size=x.shape[-2:], mode='bilinear', align_corners=False)
+        feat = F.interpolate(feat, size=x.shape[-2:], mode='bilinear', align_corners=False)
+        #simple attention
+        smap = torch.sigmoid(map)
+        #reverse attention
+        rmap = -1 * (torch.sigmoid(map)) + 1
+        #fore attention
+        f_x = self.atten(x, feat)
+        
+        s_x = smap.expand(-1, x.shape[1], -1, -1).mul(x)
+        r_x = rmap.expand(-1, x.shape[1], -1, -1).mul(x)
+        x = torch.cat([s_x, r_x, f_x], dim=1)
+        x = self.conv_in(x)
+        for conv_mid in self.conv_mid:
+            x = conv_mid(x)
+        x = F.relu(x)
+        out = self.conv_out(x)
+        out = out + map
+
+        return x, out
+
+
+class PPD(nn.Module):
+    def __init__(self, channel):
+        super(PPD, self).__init__()
+        self.relu = nn.ReLU(True)
+
+        self.upsample = lambda img, size: F.interpolate(img, size=size, mode='bilinear', align_corners=True)
+        self.conv_upsample1 = Conv(channel, channel, 3)
+        self.conv_upsample2 = Conv(channel, channel, 3)
+        self.conv_upsample3 = Conv(channel, channel, 3)
+        self.conv_upsample4 = Conv(channel, channel, 3)
+        self.conv_upsample5 = Conv(2 * channel, 2 * channel, 3)
+
+        self.conv_concat2 = Conv(2 * channel, 2 * channel, 3)
+        self.conv_concat3 = Conv(3 * channel, 3 * channel, 3)
+        self.conv4 = Conv(3 * channel, 3 * channel, 3)
+        self.conv5 = Conv(3 * channel, channel, 1)
+        self.conv6 = Conv(channel, 1, 1, bn=False, bias=True)
+
+    def forward(self, f1, f2, f3):
+        f1x2 = self.upsample(f1, f2.shape[-2:])
+        f1x4 = self.upsample(f1, f3.shape[-2:])
+        f2x2 = self.upsample(f2, f3.shape[-2:])
+
+        f2_1 = self.conv_upsample1(f1x2) * f2
+        f3_1 = self.conv_upsample2(f1x4) * self.conv_upsample3(f2x2) * f3
+
+        f1_2 = self.conv_upsample4(f1x2)
+        f2_2 = torch.cat([f2_1, f1_2], 1)
+        f2_2 = self.conv_concat2(f2_2)
+
+        f2_2x2 = self.upsample(f2_2, f3.shape[-2:])
+        f2_2x2 = self.conv_upsample5(f2_2x2)
+
+        f3_2 = torch.cat([f3_1, f2_2x2], 1)
+        f3_2 = self.conv_concat3(f3_2)
+
+        f3_2 = self.conv4(f3_2)
+        f3_2 = self.conv5(f3_2)
+        out = self.conv6(f3_2)
+
+        return f3_2, out
+
+
+class Depthwise_RFB_kernel(nn.Module):
+    def __init__(self, in_channel, out_channel, receptive_size=3, groups=1):
+        super(Depthwise_RFB_kernel, self).__init__()
+        self.conv0 = Conv(in_channel, in_channel, kernel_size=receptive_size, groups=in_channel)
+        self.conv1 = Conv(in_channel, out_channel, 1, bn=False, groups=groups)
+        self.conv2 = Conv(out_channel, out_channel, 3, dilation=receptive_size, groups=out_channel)
+        self.conv3 = Conv(out_channel, out_channel, 1, bn=False, groups=groups)
+
+    def forward(self, x):
+        x = self.conv0(x)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        return x
+
+
+class DW_RFB(nn.Module):
+    def __init__(self, in_channel, out_channel):
+        super(DW_RFB, self).__init__()
+        self.relu = nn.ReLU(True)
+
+        self.branch0 = Conv(in_channel, out_channel, 1)
+        self.branch1 = Depthwise_RFB_kernel(in_channel, out_channel, 3)
+        self.branch2 = Depthwise_RFB_kernel(in_channel, out_channel, 5)
+        self.branch3 = Depthwise_RFB_kernel(in_channel, out_channel, 7)
+
+        self.conv_cat = Conv(4 * out_channel, out_channel, 3)
+        self.conv_res = Conv(in_channel, out_channel, 1)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        x3 = self.branch3(x)
+
+        x_cat = self.conv_cat(torch.cat((x0, x1, x2, x3), 1))
+        x = self.relu(x_cat + self.conv_res(x))
+
+        return x
+
+
+class DW_RFB_Decoder(nn.Module):
+    def __init__(self, channel):
+        super(DW_RFB_Decoder, self).__init__()
+        self.rfb = DW_RFB(channel, channel)
+        self.conv_out = Conv(channel, 1, 1, bias=True, bn=False)
+
+    def forward(self, x):
+        x = self.rfb(x)
+        out = self.conv_out(x)
+
+        return x, out
+
+
+class RFB_edge(nn.Module):
+    def __init__(self, in_channel, channel):
+        super(RFB_edge, self).__init__()
+        self.relu = nn.ReLU(True)
+
+        self.branch0 = Conv(in_channel, channel // 4, 1)
+        self.branch1 = Depthwise_RFB_kernel(in_channel, channel // 4, 3)
+        self.branch2 = Depthwise_RFB_kernel(in_channel, channel // 4, 5)
+        self.branch3 = Depthwise_RFB_kernel(in_channel, channel // 4, 7)
+
+        self.conv_cat = Conv(channel, 1, 1)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        x3 = self.branch3(x)
+
+        x = self.conv_cat(torch.cat((x0, x1, x2, x3), 1))
+
+        return x

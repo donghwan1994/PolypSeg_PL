@@ -41,6 +41,26 @@ def bce_dice_loss(pred: torch.Tensor, mask: torch.Tensor,
     return (wbce + wdice).mean()
 
 
+def edge_loss(pred, mask, theta0=3, theta=5):
+    weight = 1 + 5 * torch.abs(F.avg_pool2d(mask, kernel_size=31, stride=1, padding=15) - mask)
+    # boundary map
+
+    mask_b = F.max_pool2d(1 - mask, kernel_size=theta0, stride=1, padding=(theta0 - 1) // 2)
+    mask_b = mask_b - (1 - mask) 
+
+    bce = F.binary_cross_entropy_with_logits(pred, mask_b, reduction='none')
+    
+    pred = torch.sigmoid(pred)
+    inter = pred * mask_b
+    union = pred + mask_b
+    iou = 1 - (inter + 1) / (union - inter + 1)
+
+    weighted_bce = (weight * bce).sum(dim=(2, 3)) / weight.sum(dim=(2, 3))
+    weighted_iou = (weight * iou).sum(dim=(2, 3)) / weight.sum(dim=(2, 3))
+
+    return (weighted_bce + weighted_iou).mean()
+
+
 # brought from ``https://gist.github.com/alper111/8233cdb0414b4cb5853f2f730ab95a49``.
 def _vgg(arch: str, cfg: List[Union[str, int]], batch_norm: bool, pretrained: bool, progress: bool, **kwargs: Any) -> VGG:
     if pretrained:
