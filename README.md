@@ -32,7 +32,7 @@ Make `./weights` folder and download the backbone and VGG-16 (for LossNet of MSN
 
 Novel polyp segmentation methods ([PraNet](https://github.com/DengPingFan/PraNet), [SANet](https://github.com/weijun88/SANet), [MSNet](https://github.com/Xiaoqi-Zhao-DLUT/MSNet)) are implemented.
 You can train them with the below commands.
-(For details of the methods, please read the papers and official repositories.)
+(For details of the methods, please refer to the papers and official repositories.)
 
 * PraNet (MICCAI 2020) [[paper](https://arxiv.org/pdf/2006.11392.pdf)][[github](https://github.com/DengPingFan/PraNet)]
 ```   

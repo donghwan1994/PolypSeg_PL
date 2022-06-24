@@ -5,7 +5,7 @@ import torchvision.transforms.functional as F
 
 from typing import *
 
-# All implementations are referenced to `torchvision.transforms`.
+# referenced to `torchvision.transforms`.
 
 class Resize(torch.nn.Module):
     def __init__(self, size, interpolation=F.InterpolationMode.BILINEAR, max_size=None, antialias=None):
