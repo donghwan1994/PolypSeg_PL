@@ -22,7 +22,7 @@ class Prototype(pl.LightningModule):
         self.edge_loss = edge_loss
 
     def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
-        pred, _, _, _ = self.model(x) # pred2, pred3, pred4, pred5
+        _, pred, _, _, _ = self.model(x) # pred2, pred3, pred4, pred5
         return pred
 
     def configure_optimizers(self):
