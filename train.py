@@ -188,7 +188,7 @@ if __name__ == '__main__':
     elif 'prototype' in str(args.method):
         hparams = {
             'channels': 64,
-            'epoch': 128,
+            'epoch': 1,
             'batch_size': 2,
             'lr': 0.4,
             'momentum': 0.9,
